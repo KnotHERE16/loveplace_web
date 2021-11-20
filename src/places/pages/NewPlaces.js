@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 
 import Input from "../../shared/components/formUI/Input";
 import Button from "../../shared/components/formUI/Button";
@@ -8,9 +8,14 @@ import {
 } from "../../shared/util/validators";
 import "./PlaceForm.css";
 import { useForm } from "../../shared/hooks/form-hook";
-
+import { useHttpClient } from "../../shared/hooks/http-hook";
+import ErrorModal from "../../shared/components/UIElement/ErrorModal";
+import LoadingSpinner from "../../shared/components/UIElement/LoadingSpinner";
+import { AuthContext } from "../../shared/context/auth-context";
+import { useHistory } from "react-router";
 
 const NewPlaces = () => {
+  const auth = useContext(AuthContext);
   const [formState, inputHandler] = useForm(
     {
       title: {
@@ -29,12 +34,43 @@ const NewPlaces = () => {
     false
   );
 
+  const {isLoading,errorMsg,sendRequest,clearError} = useHttpClient();
+  const history = useHistory();
 
-  const placeSubmitHandler = event =>{
+  const placeSubmitHandler = async (event) =>{
+
     event.preventDefault();
-    console.log(formState.inputs);
+
+   
+    try {
+      await sendRequest(
+        `${process.env.REACT_APP_BASE_URL}api/places`,
+        "POST",
+        JSON.stringify({
+          title: formState.inputs.title.value,
+          description: formState.inputs.description.value,
+          address: formState.inputs.address.value,
+          creator: auth.userId,
+        }),
+        {
+          "Content-Type": "application/json",
+        }
+      );
+
+      history.push('/:userId/places');
+      //redirect
+    } catch (e) {
+      console.log(e);
+    }
   }
   return (
+    <React.Fragment>
+      <ErrorModal error={errorMsg} onClear={clearError} />
+      {isLoading && (
+        <div className="center">
+          <LoadingSpinner asOverlay />
+        </div>
+      )}
     <form className="place-form" onSubmit={placeSubmitHandler}>
       <Input
         id="title"
@@ -67,6 +103,7 @@ const NewPlaces = () => {
         ADD PLACE
       </Button>
     </form>
+    </React.Fragment>
   );
 };
 

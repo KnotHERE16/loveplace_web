@@ -9,9 +9,11 @@ import Auth from "./user/pages/Auth";
 import { AuthContext } from "./shared/context/auth-context";
 
 function App() {
+  
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const login = useCallback(() => {
+  const [userId,setUserId] = useState();
+  const login = useCallback((userId) => {
+    setUserId(userId);
     setIsLoggedIn(true);
   }, []);
 
@@ -27,7 +29,7 @@ function App() {
         <Route path="/" exact>
           <Users />
         </Route>
-        <Route path="/:userId/places" exact>
+        <Route path="/my/places" exact>
           <UserPlaces />
         </Route>
         <Route path="/places/new" exact>
@@ -58,7 +60,7 @@ function App() {
   }
   return (
     <AuthContext.Provider
-      value={{ isLoggedIn: isLoggedIn, login: login, logout: logout }}
+      value={{ isLoggedIn: isLoggedIn, login: login, logout: logout ,userId:userId}}
     >
       <BrowserRouter>
         <MainNavigation />

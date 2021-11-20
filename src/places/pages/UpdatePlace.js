@@ -1,38 +1,21 @@
-import React, { useEffect } from "react";
-import { useParams  } from "react-router";
+import React, { useContext, useEffect, useState } from "react";
+import { useHistory, useParams  } from "react-router";
 import Input from "../../shared/components/formUI/Input";
 import { VALIDATOR_REQUIRE,VALIDATOR_MINLENGTH } from "../../shared/util/validators";
 import Button from "../../shared/components/formUI/Button";
 import { useForm } from "../../shared/hooks/form-hook";
 import Card from "../../shared/components/UIElement/Card/Card";
-const DUMMY_PLACES = [{
-    id : 'p1',
-    title : 'Empire',
-    description : 'One of the most famoue city',
-    imageUrl : 'https://live.staticflickr.com/1513/26497574515_91182aa215_b.jpg',
-    address : '31 Jurong West Street 41, Singapore 649412',
-    location : {
-        lat : 123.000,
-        lng : 10.00
-    },
-    creator : 'u1'
-},
-{
-    id : 'p2',
-    title : 'Emhihie',
-    description : 'eat me baby',
-    imageUrl : 'https://live.staticflickr.com/1513/26497574515_91182aa215_b.jpg',
-    address : '31 Jurong West Street 41, Singapore 649412',
-    location : {
-        lat : 123.000,
-        lng : 10.00
-    },
-    creator : 'u2'
-}];
-
+import { useHttpClient } from "../../shared/hooks/http-hook";
+import LoadingSpinner from "../../shared/components/UIElement/LoadingSpinner";
+import ErrorModal from "../../shared/components/UIElement/ErrorModal";
+import { AuthContext } from "../../shared/context/auth-context";
 
 const UpdatePlace = () => {
   const placeId = useParams().placeId;
+  const { isLoading , errorMsg,sendRequest,clearError} = useHttpClient();
+  const [loadedPlaces,setLoadedPlaces] = useState();
+  const history = useHistory();
+  const auth = useContext(AuthContext);
 
   const [formState,inputHandler,setFormData] = useForm(
     {
@@ -48,31 +31,61 @@ const UpdatePlace = () => {
     false
   );
 
-  const identifiedPlace = DUMMY_PLACES.find((p) => p.id === placeId);
-
   useEffect(() => {
-    if(identifiedPlace){
-    setFormData(
-      {
-        title: {
-          value: identifiedPlace.title,
-          isValid: true,
+    (async () => {
+      try{
+      const responseData = await sendRequest(`${process.env.REACT_APP_BASE_URL}api/places/${placeId}`);
+
+      setFormData(
+        {
+          title: {
+            value: responseData.places.title,
+            isValid: true,
+          },
+          description: {
+            value: responseData.places.description,
+            isValid: true,
+          },
         },
-        description: {
-          value: identifiedPlace.description,
-          isValid: true,
-        },
-      },
-      true
-    );
-    }
-  }, [setFormData, identifiedPlace]);
+        true
+      );  
+
+      setLoadedPlaces(responseData.places);
+     
+      }catch(e){
+
+      }
+    })()
+
+  },[placeId,sendRequest,setFormData])
   
-  const placeUpdateSubmitHandler = event => {
+  const placeUpdateSubmitHandler = async event => {
     event.preventDefault();
-    console.log(formState.inputs);
+    try{
+    await sendRequest(
+      `${process.env.REACT_APP_BASE_URL}api/places/${placeId}`,'PATCH',
+      JSON.stringify({
+        title: formState.inputs.title.value,
+        description: formState.inputs.description.value,
+      })
+    );
+    history.push(`/${auth.userId}/places`);
+  }catch(e){
+    console.log(e);
   }
-  if (!identifiedPlace) {
+   
+    
+   }
+
+   if (isLoading){
+    return (
+      <div className="center">
+        <LoadingSpinner />
+      </div>
+    )
+  }
+
+  if (!loadedPlaces && !errorMsg) {
     return (
       <div className="center">
         <Card>
@@ -82,15 +95,11 @@ const UpdatePlace = () => {
     );
   }
 
-  if (!formState.inputs.title.value){
-    return (
-      <div className="center">
-        <h2>Loading</h2>
-      </div>
-    )
-  }
-  return (
-    <form className='place-form' onSubmit={placeUpdateSubmitHandler}>
+ 
+  return ( 
+    <React.Fragment>
+      <ErrorModal error={errorMsg} onClear={clearError} />
+    {!isLoading && loadedPlaces && (<form className='place-form' onSubmit={placeUpdateSubmitHandler}>
       <Input
         id="title"
         type="text"
@@ -116,7 +125,8 @@ const UpdatePlace = () => {
            Submit
        </Button>
       
-    </form>
+    </form>)}
+    </React.Fragment>
   );
 }
 
