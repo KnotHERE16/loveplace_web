@@ -30,11 +30,16 @@ const PlaceItem = (props) => {
 
   const confirmDeleteHandler = async () => {
     setShowConfirmModal(false);
+   
     try{
-    sendRequest(`${process.env.REACT_APP_BASE_URL}${props.id}`,'DELETE')
-    }catch (e){}
+    const responseData =await sendRequest(`${process.env.REACT_APP_BASE_URL}api/places/${props.id}`,'DELETE');
+    if(responseData.statusCode === 200){
     props.onDelete(props.id);
+    }
+    }catch (e){}
+  
   };
+ 
   return (
     <React.Fragment>
       <ErrorModal error={errorMsg} onClear={clearError} />
@@ -74,7 +79,7 @@ const PlaceItem = (props) => {
         <Card className="place-item__content">
           {isLoading && (<LoadingSpinner asOverlay/>)}
           <div className="place-item__image">
-            <img src={props.image} alt={props.title} />
+            <img src={`${process.env.REACT_APP_BASE_URL}${props.image}`} alt={props.title} />
           </div>
 
           <div className="place-item__info">
@@ -86,10 +91,10 @@ const PlaceItem = (props) => {
             <Button inverse onClick={openModalMap}>
               View On Map
             </Button>
-            {auth.isLoggedIn && (
+            {auth.userId === props.creatorId && (
               <Button to={`/places/${props.id}`}>Edit</Button>
             )}
-            {auth.isLoggedIn && (
+            {auth.userId === props.creatorId && (
               <Button onClick={showDeleteWarningHandler} danger>
                 DELETE
               </Button>

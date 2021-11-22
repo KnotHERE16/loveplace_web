@@ -13,7 +13,7 @@ import ErrorModal from "../../shared/components/UIElement/ErrorModal";
 import LoadingSpinner from "../../shared/components/UIElement/LoadingSpinner";
 import { AuthContext } from "../../shared/context/auth-context";
 import { useHistory } from "react-router";
-
+import ImageUpload from "../../shared/components/formUI/ImageUpload";
 const NewPlaces = () => {
   const auth = useContext(AuthContext);
   const [formState, inputHandler] = useForm(
@@ -30,6 +30,10 @@ const NewPlaces = () => {
         value: "",
         isValid: false,
       },
+      image : {
+        value:'',
+        isValid: false
+      }
     },
     false
   );
@@ -43,22 +47,19 @@ const NewPlaces = () => {
 
    
     try {
+      const formData = new FormData();
+      formData.append('title',formState.inputs.title.value);
+      formData.append('description',formState.inputs.description.value);
+      formData.append('address',formState.inputs.address.value);
+      formData.append('creator',auth.userId);
+      formData.append('image',formState.inputs.image.value);
       await sendRequest(
         `${process.env.REACT_APP_BASE_URL}api/places`,
         "POST",
-        JSON.stringify({
-          title: formState.inputs.title.value,
-          description: formState.inputs.description.value,
-          address: formState.inputs.address.value,
-          creator: auth.userId,
-        }),
-        {
-          "Content-Type": "application/json",
-        }
+        formData,
+        'formdata'
       );
-
-      history.push('/:userId/places');
-      //redirect
+      history.push('/my/places');
     } catch (e) {
       console.log(e);
     }
@@ -97,7 +98,7 @@ const NewPlaces = () => {
         errorText="Please enter a valid address"
         onInput={inputHandler}
       />
-      
+      <ImageUpload id="image" onInput={inputHandler} errorText='provie an image' />
 
       <Button type="submit" disabled={!formState.isValid}>
         ADD PLACE

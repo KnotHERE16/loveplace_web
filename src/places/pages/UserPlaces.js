@@ -4,28 +4,31 @@ import { useHttpClient } from '../../shared/hooks/http-hook';
 import ErrorModel from '../../shared/components/UIElement/ErrorModal';
 import LoadingSpinner from "../../shared/components/UIElement/LoadingSpinner";
 import { AuthContext } from '../../shared/context/auth-context';
+import { useParams } from 'react-router';
 
 const UserPlaces = () => {
   
     const {isLoading,errorMsg,sendRequest,clearError} = useHttpClient();
     const [loadedPlaces, setLoadedPlaces] = useState();
+    let userId = useParams().userId;
     const auth = useContext(AuthContext);
+    if(userId === 'my'){
+        userId = auth.userId;
+    }
 
         useEffect(() => {
         (async () => {
-            try{
-            const responseData = await sendRequest(`${process.env.REACT_APP_BASE_URL}api/places/user/${auth.userId}`);
-            setLoadedPlaces(responseData.places)
-            }catch(e){
-
+            try {
+                const responseData = await sendRequest(`${process.env.REACT_APP_BASE_URL}api/places/user/${userId}`);
+                setLoadedPlaces(responseData.places);
+            } catch (e) {
             }
         })()
-    },[auth.userId,sendRequest])
+    },[userId,sendRequest])
 
     const placeDeleteHandler = (deletedPlaceId) => {
         setLoadedPlaces(function (prev) {
                 return prev.filter(function (place) {
-                    console.log(place);
                         return place.id !== deletedPlaceId;
                     });
             }
