@@ -99,6 +99,7 @@ const Auth = () => {
   return (
     <React.Fragment>
       <ErrorModal error={errorMsg} onClear={clearError} />
+      <div className="center">
       <Card className="authentication">
         {isLoading && <LoadingSpinner asOverylay={true} />}
         <h2>Login</h2>
@@ -146,6 +147,7 @@ const Auth = () => {
           SWITCH TO {isLoginMode ? "SIGNUP" : "LOGIN"}
         </Button>
       </Card>
+      </div>
     </React.Fragment>
   );
 };
